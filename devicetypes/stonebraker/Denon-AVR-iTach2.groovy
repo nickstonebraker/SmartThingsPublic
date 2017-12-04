@@ -20,20 +20,10 @@
  *  on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License
  *  for the specific language governing permissions and limitations under the License.
  *
- * Some future commands that might be useful to incorporate reading:
- * Power Status: PWRQSTN
- * Input Selected: SLIQSTN
- * Volume Level: MVLQSTN (value in hex)
- * Artist Name: NATQSTN
- * Track Name: NTIQSTN
- * Zone 2 Mute: ZMTQSTN
- * Zone 2 Volume: ZVLQSTN
- * Zone 2 Input Selected: SLZQSTN
- * ISCP commands were found at https://github.com/miracle2k/onkyo-eiscp/blob/master/eiscp-commands.yaml
  */
 
 metadata {
-	definition (name: "onkyoIP", namespace: "allanak", author: "Allan Klein") {
+	definition (name: "denon-avr-itach", namespace: "nickstonebraker", author: "Nick Stonebraker") {
 	capability "Switch"
 	capability "Music Player"
 	command "cable"
@@ -118,19 +108,10 @@ def updated() {
 def mute(){
 	log.debug "Muting receiver"
 	sendEvent(name: "switch", value: "muted")
-	def msg = getEiscpMessage("AMT01")
+	def msg = getCmd("sendirxxxxxxxxxx")
 	def ha = new physicalgraph.device.HubAction(msg,physicalgraph.device.Protocol.LAN )
 	return ha
 	}
-
-def unmute(){
-	log.debug "Unmuting receiver"
-	sendEvent(name: "switch", value: "unmuted")
-	def msg = getEiscpMessage("AMT00")
-	def ha = new physicalgraph.device.HubAction(msg,physicalgraph.device.Protocol.LAN )
-	return ha
-	}
-
 def setLevel(vol){
 	log.debug "Setting volume level $vol"
 	if (vol < 0) vol = 0
@@ -141,7 +122,7 @@ def setLevel(vol){
 		// Strip the first six zeroes of the hex encoded value because we send volume as 2 digit hex
 		volhex = volhex.replaceFirst("\\u0030{6}","")
 		log.debug "Converted volume $vol into hex: $volhex"
-		def msg = getEiscpMessage("MVL${volhex}")
+		def msg = getCmd("MVL${volhex}")
 		log.debug "Setting volume to MVL${volhex}"
 		def ha = new physicalgraph.device.HubAction(msg,physicalgraph.device.Protocol.LAN )
 		return ha
@@ -151,7 +132,7 @@ def setLevel(vol){
 def on() {
 	log.debug "Powering on receiver"
 	sendEvent(name: "switch", value: "on")
-	def msg = getEiscpMessage("PWR01")
+	def msg = getCmd("PWR01")
 	def ha = new physicalgraph.device.HubAction(msg,physicalgraph.device.Protocol.LAN)
 	return ha
 	}
@@ -159,38 +140,37 @@ def on() {
 def off() {
 	log.debug "Powering off receiver"
 	sendEvent(name: "switch", value: "off")
-	def msg = getEiscpMessage("PWR00")
 	def ha = new physicalgraph.device.HubAction(msg,physicalgraph.device.Protocol.LAN)
 	return ha
 	}
 
 def cable() {
 	log.debug "Setting input to Cable"
-	def msg = getEiscpMessage("SLI01")
+	def msg = getCmd("SLI01")
 	def ha = new physicalgraph.device.HubAction(msg,physicalgraph.device.Protocol.LAN)
 	return ha
 	}
 
 def stb() {
 	log.debug "Setting input to STB"
-	def msg = getEiscpMessage("SLI02")
+	def msg = getCmd("SLI02")
 	def ha = new physicalgraph.device.HubAction(msg,physicalgraph.device.Protocol.LAN)
 	return ha
 	}
 
 def pc() {
 	log.debug "Setting input to PC"
-	def msg = getEiscpMessage("SLI05")
+	def msg = getCmd("SLI05")
 	def ha = new physicalgraph.device.HubAction(msg,physicalgraph.device.Protocol.LAN)
 	return ha
 	}
 
 def net() {
 	log.debug "Setting input to NET"
-	def msg = getEiscpMessage("SLI2B")
+	def msg = getCmd("SLI2B")
 	def ha = new physicalgraph.device.HubAction(msg,physicalgraph.device.Protocol.LAN)
 	log.debug "Pressing play"
-	def msg2 = getEiscpMessage("NSTpxx")
+	def msg2 = getCmd("NSTpxx")
 	def ha2 = new physicalgraph.device.HubAction(msg2,physicalgraph.device.Protocol.LAN)    
 	return ha
     return ha2
@@ -198,82 +178,24 @@ def net() {
 
 def aux() {
 	log.debug "Setting input to AUX"
-	def msg = getEiscpMessage("SLI03")
+	def msg = getCmd("SLI03")
 	def ha = new physicalgraph.device.HubAction(msg,physicalgraph.device.Protocol.LAN)
 	return ha
 	}
 def z2on() {
 	log.debug "Turning on Zone 2"
-	def msg = getEiscpMessage("ZPW01")
+	def msg = getCmd("ZPW01")
 	def ha = new physicalgraph.device.HubAction(msg,physicalgraph.device.Protocol.LAN)
 	return ha
 	}
 def z2off() {
 	log.debug "Turning off Zone 2"
-	def msg = getEiscpMessage("ZPW00")
+	def msg = getCmd("ZPW00")
 	def ha = new physicalgraph.device.HubAction(msg,physicalgraph.device.Protocol.LAN)
 	return ha
 	}
 
 
-def getEiscpMessage(command){
-	def sb = StringBuilder.newInstance()
-	def eiscpDataSize = command.length() + 3  // this is the eISCP data size
-	def eiscpMsgSize = eiscpDataSize + 1 + 16  // this is the size of the entire eISCP msg
-
-	/* This is where I construct the entire message
-        character by character. Each char is represented by a 2 disgit hex value */
-	sb.append("ISCP")
-	// the following are all in HEX representing one char
-
-	// 4 char Big Endian Header
-	sb.append((char)Integer.parseInt("00", 16))
-	sb.append((char)Integer.parseInt("00", 16))
-	sb.append((char)Integer.parseInt("00", 16))
-	sb.append((char)Integer.parseInt("10", 16))
-
-	// 4 char  Big Endian data size
-	sb.append((char)Integer.parseInt("00", 16))
-	sb.append((char)Integer.parseInt("00", 16))
-	sb.append((char)Integer.parseInt("00", 16))
-	// the official ISCP docs say this is supposed to be just the data size  (eiscpDataSize)
-	// ** BUT **
-	// It only works if you send the size of the entire Message size (eiscpMsgSize)
-	// Changing eiscpMsgSize to eiscpDataSize for testing
-	sb.append((char)Integer.parseInt(Integer.toHexString(eiscpDataSize), 16))
-	//sb.append((char)Integer.parseInt(Integer.toHexString(eiscpMsgSize), 16))
-
-
-	// eiscp_version = "01";
-	sb.append((char)Integer.parseInt("01", 16))
-
-	// 3 chars reserved = "00"+"00"+"00";
-	sb.append((char)Integer.parseInt("00", 16))
-	sb.append((char)Integer.parseInt("00", 16))
-	sb.append((char)Integer.parseInt("00", 16))
-
-	//  eISCP data
-	// Start Character
-	sb.append("!")
-
-	// eISCP data - unittype char '1' is receiver
-	sb.append("1")
-
-	// eISCP data - 3 char command and param    ie PWR01
-	sb.append(command)
-
-	// msg end - this can be a few different cahrs depending on you receiver
-	// my NR5008 works when I use  'EOF'
-	//OD is CR
-	//0A is LF
-	/*
-	[CR]			Carriage Return					ASCII Code 0x0D			
-	[LF]			Line Feed						ASCII Code 0x0A			
-	[EOF]			End of File						ASCII Code 0x1A			
-	*/
-	//works with cr or crlf
-	sb.append((char)Integer.parseInt("0D", 16)) //cr
-	//sb.append((char)Integer.parseInt("0A", 16))
-
-	return sb.toString()
+def getCmd(command){
+		return "sendir,1:3,1,1500,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16\r";
 	}
