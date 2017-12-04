@@ -24,7 +24,6 @@ definition(
     iconUrl: "https://s3.amazonaws.com/smartapp-icons/MyApps/Cat-MyApps.png",
     iconX2Url: "https://s3.amazonaws.com/smartapp-icons/MyApps/Cat-MyApps@2x.png"
 )
-
 preferences {
 	page(name: "selectController")
 	page(name: "configureButton1")
@@ -38,6 +37,18 @@ def selectController() {
 	dynamicPage(name: "selectController", title: "First, select your button device", nextPage: "configureButton1", uninstall: configured()) {
 		section {
 			input "buttonDevice", "capability.button", title: "Controller", multiple: false, required: true
+            input "theSwitch", "capability.switch", title: "EntSwitch", multiple: false, required: true
+            input "powerMeter", "capability.powerMeter", title: "powerMeter", multiple: false, required: true
+            input "projSwitch", "capability.switch", title: "projSwitch", multiple: false, required: true
+            input "speaker1", "capability.switch", title: "speaker1", multiple: false, required: true
+            input "speaker2", "capability.switch", title: "speaker2", multiple: false, required: true
+            input "speaker3", "capability.switch", title: "speaker3", multiple: false, required: true
+            input "speaker4", "capability.switch", title: "speaker4", multiple: false, required: true
+            input "speaker5", "capability.switch", title: "speaker5", multiple: false, required: false
+            input "speaker6", "capability.switch", title: "speaker6", multiple: false, required: false
+            input "blind1", "capability.switch", title: "blind1", multiple: false, required: false
+            input "blind2", "capability.switch", title: "blind2", multiple: false, required: false
+            input "blind3", "capability.switch", title: "blind3", multiple: false, required: false
 		}
 
 	}
@@ -64,7 +75,7 @@ def configureButton4() {
 
 def getButtonSections(buttonNumber) {
 	return {
-		section("Denon AVR") {
+		section("Denon AVR X2000") {
         		input "function", "enum", title: "Pick a function", multiple: true, required: false,
 					options: ["On/Off", "VolUp", "VolDown", "Up", "Down", "Left", "Right", "Ok", "Menu", "Mute"]
 		}
@@ -204,81 +215,468 @@ def buttonEvent(evt){
 	}
 }
 
+/*                   	 def denonon() {
+						sendHubCommand(new physicalgraph.device.HubAction("""sendir,1:3,1,38000,1,1,11,29,10,70,10,30,10,30,10,30,10,70,10,30,10,30,10,30,10,30,10,30,10,70,10,70,10,30,10,30,10,1776,10,30,10,70,10,30,10,30,10,30,10,30,10,70,10,70,10,70,10,70,10,70,10,30,10,30,10,70,10,70,10,1617,10,70,10,30,10,30,10,30,10,70,10,30,10,30,10,30,10,30,10,30,10,70,10,70,10,30,10,30,10,1776,10,30,10,70,10,30,10,30,10,30,10,30,10,70,10,70,10,70,10,70,10,70,10,30,10,30,10,70,10,70,10,1617\r\n""", physicalgraph.device.Protocol.LAN, "${deviceNetworkId}"))
+   						 }
+					def denonblu() {
+						sendHubCommand(new physicalgraph.device.HubAction("""sendir,1:3,6,38109,1,1,128,64,16,16,16,16,16,48,16,16,16,48,16,16,16,48,16,16,16,16,16,48,16,16,16,16,16,48,16,48,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,48,16,16,16,48,16,16,16,16,16,16,16,48,16,16,16,16,16,16,16,48,16,16,16,48,16,48,16,16,16,48,16,16,16,16,16,16,16,16,16,48,16,48,16,48,16,48,16,48,16,16,16,2841,128,64,16,16,16,16,16,48,16,16,16,48,16,16,16,48,16,16,16,16,16,48,16,16,16,16,16,48,16,48,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,48,16,16,16,48,16,16,16,16,16,16,16,48,16,16,16,16,16,16,16,48,16,16,16,48,16,48,16,16,16,48,16,16,16,16,16,16,16,16,16,48,16,48,16,48,16,48,16,48,16,16,16,2842,128,64,16,16,16,16,16,48,16,16,16,48,16,16,16,48,16,16,16,16,16,48,16,16,16,16,16,48,16,48,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,48,16,16,16,48,16,16,16,16,16,16,16,48,16,16,16,16,16,16,16,48,16,16,16,48,16,48,16,16,16,48,16,16,16,16,16,16,16,16,16,48,16,48,16,48,16,48,16,48,16,16,16,3800\r\n""", physicalgraph.device.Protocol.LAN, "${deviceNetworkId}")) 
+						}
+*/                    
 def executeHandlers(buttonNumber, value) {
-	log.debug "executeHandlers: $buttonNumber - $value"
+	// log.debug "executeHandlers: $buttonNumber - $value"
     	def deviceNetworkId = "C0A8019B:1386"
-		def theCom
+        // def deviceNetworkId = "C0A80149:1386"
+        def theCom1
+        def theCom2
+        def theCom3
+        def theCom4
+        def theCom5
+                    if (value == "pushed" && buttonNumber == 1) {
+                    	log.debug "running sequence: Watch Disc"
+                        
+                        def currentSwitch = currentSwitchState()
+                        def currentProj = currentProjLiftState()
+                        def currentSpeaker = currentSpeakerState()
+                        
+                        if (currentSwitch == "off" && currentProj == "off" && currentSpeaker == "off"){                   
+							runIn(1, EntOn)
+                        	runIn(1, ProjDown)
+                            runIn(3, BlindDown)
+                            runIn(2, speakersOn)
+                        	runIn(14, DenOn)
+                        	runIn(18, ProOn)
+                        	runIn(20, DenBlu)
+                        	runIn(22, BluOn)     
+                        	}
+                       	else if (currentSwitch == "off" && currentProj == "on"){                   
+							runIn(1, EntOn)
+                            runIn(3, BlindDown)
+                            runIn(2, speakersOn)
+                        	runIn(14, DenOn)
+                        	runIn(20, DenBlu)
+                        	runIn(22, BluOn)     
+                        	}
+                        else if (currentSwitch == "on" && currentProj == "off"){                   
+                        	runIn(1, ProjDown)
+                            runIn(2, BlindDown)
+                        	runIn(3, ProOn)
+                        	runIn(4, DenBlu)
+                        	runIn(5, BluOn)  
+                        	}
+                        else if (currentSwitch == "on" && currentProj == "on"){                   
+                        	runIn(1, BlindDown)
+                            runIn(4, DenBlu)
+                        	runIn(5, BluOn)  
+                        	}
+                        }
+                        if (value == "pushed" && buttonNumber == 7) {
+                    	log.debug "running sequence: Watch TV"
+                        
+                        def currentSwitch = currentSwitchState()
+                        def currentProj = currentProjLiftState()
+                        def currentSpeaker = currentSpeakerState()
+                        
+                        if (currentSwitch == "off" && currentProj == "off" && currentSpeaker == "off"){                   
+							runIn(1, EntOn)
+                        	runIn(1, ProjDown)
+                            runIn(3, BlindDown)
+                            runIn(2, speakersOn)
+                        	runIn(14, DenOn)
+                        	runIn(18, ProOn)
+                        	runIn(20, DenBlu)
+                        	runIn(22, BluOn)
+                            runIn(48, BluTV)
+                        	}
+                       	else if (currentSwitch == "off" && currentProj == "on"){                   
+							runIn(1, EntOn)
+                            runIn(3, BlindDown)
+                            runIn(2, speakersOn)
+                        	runIn(14, DenOn)
+                        	runIn(20, DenBlu)
+                        	runIn(22, BluOn)
+                            runIn(48, BluTV)
+                        	}
+                        else if (currentSwitch == "on" && currentProj == "off"){                   
+                        	runIn(1, ProjDown)
+                            runIn(2, BlindDown)
+                        	runIn(3, ProOn)
+                        	runIn(4, DenBlu)
+                        	runIn(5, BluOn)
+                            runIn(6, BluTV)
+                        	}
+                        else if (currentSwitch == "on" && currentProj == "on"){                   
+                        	runIn(1, DenBlu)
+                        	runIn(2, BlindDown)
+                            runIn(3, BluOn)
+                            runIn(10, BluTV)
+                        	}
+                        }
+                    /*if (value == "pushed" && buttonNumber == 7) { //Old automation
+               			log.debug "running sequence: Watch TV"
+						runIn(1, EntOn)
+                        runIn(1, ProjDown)
+                        runIn(2, speakersOn)
+                        runIn(14, DenOn)
+                        runIn(18, ProOn)
+                        runIn(20, DenBlu)
+                        runIn(22, BluOn)
+                        runIn(48, BluTV)
+                        }*/
+                        if (value == "pushed" && buttonNumber == 5) {
+                    	log.debug "running sequence: Watch Nexus"
+                        
+                        def currentSwitch = currentSwitchState()
+                        def currentProj = currentProjLiftState()
+                        def currentSpeaker = currentSpeakerState()
+                        
+                        if (currentSwitch == "off" && currentProj == "off" && currentSpeaker == "off"){                   
+							runIn(1, EntOn)
+                        	runIn(1, ProjDown)
+                            runIn(3, BlindDown)
+                        	runIn(2, speakersOn)
+                        	runIn(14, DenOn)
+                        	runIn(19, ProOn)
+                        	runIn(21, DenNex)
+                        	}
+                       	else if (currentSwitch == "off" && currentProj == "on"){                   
+							runIn(1, EntOn)
+                            runIn(3, BlindDown)
+                            runIn(2, speakersOn)
+                        	runIn(14, DenOn)
+                        	runIn(20, DenNex)
+                        	}
+                        else if (currentSwitch == "on" && currentProj == "off"){                   
+                        	runIn(1, ProjDown)
+                            runIn(2, BlindDown)
+                        	runIn(3, ProOn)
+                        	runIn(4, DenNex)
+                        	}
+                        else if (currentSwitch == "on" && currentProj == "on"){                   
+                        	runIn(1, DenNex)
+                            runIn(2, BlindDown)
+                        	}
+                        }    
+                 /*   if (value == "pushed" && buttonNumber == 5) { //old automation
+               			log.debug "running sequence: Watch Nexus"
+						runIn(1, EntOn)
+                        runIn(1, ProjDown)
+                        runIn(2, speakersOn)
+                        runIn(14, DenOn)
+                        runIn(18, ProOn)
+                        runIn(20, DenNex)
+                        } */   
+                    if (value == "pushed" && buttonNumber == 2) {
+                    	log.debug "running sequence: Watch Apple TV"
+                        
+                        def currentSwitch = currentSwitchState()
+                        def currentProj = currentProjLiftState()
+                        def currentSpeaker = currentSpeakerState()
+                        
+                        if (currentSwitch == "off" && currentProj == "off" && currentSpeaker == "off"){                   
+							runIn(1, EntOn)
+                        	runIn(1, ProjDown)
+                            runIn(3, BlindDown)
+                        	runIn(2, speakersOn)
+                        	runIn(14, DenOn)
+                        	runIn(18, ProOn)
+                        	runIn(20, DenApp)
+                        	}
+                       	else if (currentSwitch == "off" && currentProj == "on"){                   
+							runIn(1, EntOn)
+                            runIn(3, BlindDown)
+                            runIn(2, speakersOn)
+                        	runIn(14, DenOn)
+                        	runIn(20, DenApp)
+                        	}
+                        else if (currentSwitch == "on" && currentProj == "off"){                   
+                        	runIn(1, ProjDown)
+                            runIn(2, BlindDown)
+                        	runIn(3, ProOn)
+                        	runIn(4, DenApp)
+                        	}
+                        else if (currentSwitch == "on" && currentProj == "on"){                   
+                        	runIn(2, BlindDown)
+                            runIn(1, DenApp)
+                        	}
+                        }
+                 /*   if (value == "pushed" && buttonNumber == 2) {
+               			log.debug "running sequence: Watch AppleTV"
+						runIn(1, EntOn)
+                        runIn(1, ProjDown)
+                        runIn(2, speakersOn)
+                        runIn(14, DenOn)
+                        runIn(18, ProOn)
+                        runIn(20, DenApp)
+                        } */ //Old Automation
+                        if (value == "pushed" && buttonNumber == 8) {
+                    	log.debug "running sequence: Listen to music"
+                        
+                        def currentSwitch = currentSwitchState()
+                        def currentProj = currentProjLiftState()
+                        def currentSpeaker = currentSpeakerState()
+                        def currentPower = currentSwitchPower()
+                        
+                        if (currentSwitch == "off"){                   
+							runIn(1, EntOn)
+                        	runIn(14, DenOn)
+                        	runIn(18, DenNex)
+                        	}
+                        if (currentPower > 103){                   
+                        	runIn(4, BluOn)
+                        	}
+                        if (currentSwitch == "on"){                   
+                        	runIn(1, DenNex)
+                        	}
+						if (currentProj == "on"){                   
+                            runIn(3, ProOff)
+                        	runIn(4, ProjUp)
+                        	}
+                        if (currentSpeaker == "off"){                   
+                        	runIn(2, speakersOn)
+                        	}
+                        }
+                  /*  if (value == "pushed" && buttonNumber == 8) {
+               			log.debug "running sequence: Listen to music"
+						runIn(1, EntOn)
+                        runIn(2, speakersOn)
+                        runIn(14, DenOn)
+                        runIn(18, DenNex)
+                        }  */ // Old Automation
+                        
+					if (value == "pushed" && buttonNumber == 9) {
+                     	log.debug "running sequence: Turn off Everything"
+                        runIn(1, BlindUp)
+                        def currentSwitch = currentSwitchState()
+                        def currentProj = currentProjLiftState()
+                        def currentSpeaker = currentSpeakerState()
+                        def currentPower = currentSwitchPower()
+                        log.debug("current power = $currentPower")
+                        
+                        if (currentSwitch == "on"){                   
+                        	
+                            if (currentPower > 50){                   
+                        	runIn(5, DenOn)
+                        	}
+                        //	runIn(5, BluOn)
+                            runIn(500, EntOff)
+                        	}
+                        if (currentPower > 103){                   
+                        	runIn(4, BluOn)
+                        	}
+                        if (currentProj == "on"){                   
+                            runIn(1, ProOff)
+                        	runIn(2, ProjUp)
+                            runIn(3, BlindUp)
+                        	}
+                        if (currentSpeaker == "on"){                   
+                        	runIn(6, speakersOff)
+                        	}
+                        }
+                            
+					/*	runIn(1, ProOff)
+                        runIn(2, ProjUp)
+                        runIn(3, DenOn)
+                        runIn(5, BluOn)
+                        runIn(10, speakersOff)
+                        runIn(25, EntOff)
+                        }  */ //Old automation  
+              		if (value == "pushed" && buttonNumber == 11) {
+                     	log.debug "running sequence: Turn off Music"
+						runIn(1, DenOn)
+                        runIn(1, ProjUp)
+                        runIn(5, speakersOff)
+                        runIn(6, EntOff)
+                        } 
+                    if (value == "pushed" && buttonNumber == 12) {
+                     	log.debug "running sequence: Turn on DJ"
+						
+                        def currentSwitch = currentSwitchState()
+                        def currentProj = currentProjLiftState()
+                        def currentSpeaker = currentSpeakerState()
+                        def currentPower = currentSwitchPower()
+                        
+                        if (currentSwitch == "off"){                   
+							runIn(1, EntOn)
+                        	runIn(14, DenOn)
+                        	runIn(18, DenDJ)
+                        	}
+                        if (currentPower > 103){                   
+                        	runIn(4, BluOn)
+                        	}
+                        if (currentSwitch == "on"){                   
+                        	runIn(1, DenDJ)
+                        	}
+						if (currentProj == "on"){                   
+                            runIn(3, ProOff)
+                        	runIn(4, ProjUp)
+                        	}
+                        if (currentSpeaker == "off"){                   
+                        	runIn(2, speakersOn)
+                        	}
+                        }
+                        
+                       /* runIn(1, EntOn)
+                        runIn(2, speakersOn)
+                        runIn(14, DenOn)
+                        runIn(18, DenDJ)
+                        } */ //Old automatio
+                       
+                        
+                        
+                    }
+
+
+def currentSwitchState(){
+	def currentState = theSwitch.currentValue("switch")
+    
+    return currentState
+    
+    }
+def currentSwitchPower(){
+	def currentState = powerMeter.currentValue("power")
+    
+    return currentState
+    
+    }
+
+def currentProjLiftState(){
+	def currentState = projSwitch.currentValue("switch")
+    
+    return currentState
+    
+    }
+    
+def currentSpeakerState(){
+	def currentState = speaker1.currentValue("switch")
+    
+    return currentState
+}
+
+def speakersOn() {
+	log.debug "Speakers on"
+    speaker1.on()
+    speaker2.on()
+    speaker3.on()
+    speaker4.on()
+    speaker5.on()
+    speaker6.on()
+    }
+    
+def speakersOff() {
+	log.debug "Speakers on"
+    speaker1.off()
+    speaker2.off()
+    speaker3.off()
+    speaker4.off()
+    speaker5.off()
+    speaker6.off()
+    }
+    
+def ProjDown() {
+	log.debug "Projector coming out"
+    projSwitch.on()
+    }
+    
+def ProjUp() {
+	log.debug "Projector coming out"
+    projSwitch.off()
+    }
+    
+def BlindDown() {
+	log.debug "Blinds going down"
+    blind1.on()
+    blind2.on()
+    blind3.on()
+    }
+    
+def BlindUp() {
+	log.debug "Blinds going up"
+    blind1.off()
+    blind2.off()
+    blind3.off()
+    }      
+
+def EntOn() {
+	log.debug "Entertainment switch on"
+    theSwitch.on()
+//    Entertainment.On
+    }
+def EntOff() {
+	log.debug "Entertainment switch off"
+    theSwitch.off()
+//    Entertainment.On
+    }
+def ProOn() {
+	log.debug "Projector turned on"
+    def deviceNetworkId = "C0A8019B:1386"
+		sendHubCommand(new physicalgraph.device.HubAction("sendir,1:2,1,38000,1,1,343,170,22,62,22,62,22,20,22,20,22,20,22,20,22,20,22,62,22,62,22,20,22,62,22,20,22,62,22,20,22,62,22,20,22,20,22,20,22,20,22,20,22,62,22,20,22,20,22,62,22,62,22,62,22,62,22,62,22,20,22,62,22,62,22,20,22,3800\r", physicalgraph.device.Protocol.LAN, "${deviceNetworkId}"))
+        sendHubCommand(new physicalgraph.device.HubAction("sendir,1:2,1,38000,1,1,343,170,22,62,22,62,22,20,22,20,22,20,22,20,22,20,22,62,22,62,22,20,22,62,22,20,22,62,22,20,22,62,22,20,22,20,22,20,22,20,22,20,22,62,22,20,22,20,22,62,22,62,22,62,22,62,22,62,22,20,22,62,22,62,22,20,22,3800\r", physicalgraph.device.Protocol.LAN, "${deviceNetworkId}"))
+        }
+def ProOff() {
+	log.debug "Projector turned off"
+    def deviceNetworkId = "C0A8019B:1386"
+		sendHubCommand(new physicalgraph.device.HubAction("sendir,1:2,2,37764,1,1,24,484,15,69,19,64,22,21,16,27,14,29,14,29,14,29,12,72,20,63,22,21,19,64,22,21,20,64,22,21,21,63,22,21,22,62,22,21,22,21,22,21,22,62,22,21,22,21,22,62,22,21,22,62,22,62,22,62,22,21,22,62,22,62,22,21,22,1540,343,168,22,62,22,62,22,21,22,21,22,21,22,21,22,21,22,62,22,62,22,21,22,62,22,21,22,62,22,21,22,62,22,21,22,62,22,21,22,21,22,21,22,62,22,21,22,21,22,62,22,21,22,62,22,62,22,62,22,21,22,62,22,62,22,21,22,1541,343,168,22,62,22,62,22,21,22,21,22,21,22,21,22,21,22,62,22,62,22,21,22,62,22,21,22,62,22,21,22,62,22,21,22,62,22,21,21,22,18,25,15,69,18,25,12,31,10,74,12,31,8,76,9,75,9,75,7,36,4,80,6,78,5,3700\r", physicalgraph.device.Protocol.LAN, "${deviceNetworkId}"))
+        }
+def DenOn() {
+	log.debug "Denon Av Turned on/off"
+    def deviceNetworkId = "C0A8019B:1386"
+		sendHubCommand(new physicalgraph.device.HubAction("sendir,1:3,1,38109,1,1,128,64,16,16,16,16,16,48,16,16,16,48,16,16,16,48,16,16,16,16,16,48,16,16,16,16,16,48,16,48,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,48,16,16,16,48,16,16,16,16,16,16,16,48,16,16,16,48,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,48,16,16,16,16,16,16,16,48,16,16,16,16,16,16,16,2840,128,64,16,16,16,16,16,48,16,16,16,48,16,16,16,48,16,16,16,16,16,48,16,16,16,16,16,48,16,48,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,48,16,16,16,48,16,16,16,16,16,16,16,48,16,16,16,48,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,48,16,16,16,16,16,16,16,48,16,16,16,16,16,16,16,2840,128,64,16,16,16,16,16,48,16,16,16,48,16,16,16,48,16,16,16,16,16,48,16,16,16,16,16,48,16,48,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,48,16,16,16,48,16,16,16,16,16,16,16,48,16,16,16,48,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,48,16,16,16,16,16,16,16,48,16,16,16,16,16,16,16,3800\r", physicalgraph.device.Protocol.LAN, "${deviceNetworkId}"))
+   }
+def DenBlu() {
+	log.debug "Denon Switched to Bluray"
+    def deviceNetworkId = "C0A8019B:1386"
+		sendHubCommand(new physicalgraph.device.HubAction("sendir,1:3,6,38109,1,1,128,64,16,16,16,16,16,48,16,16,16,48,16,16,16,48,16,16,16,16,16,48,16,16,16,16,16,48,16,48,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,48,16,16,16,48,16,16,16,16,16,16,16,48,16,16,16,16,16,16,16,48,16,16,16,48,16,48,16,16,16,48,16,16,16,16,16,16,16,16,16,48,16,48,16,48,16,48,16,48,16,16,16,2841,128,64,16,16,16,16,16,48,16,16,16,48,16,16,16,48,16,16,16,16,16,48,16,16,16,16,16,48,16,48,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,48,16,16,16,48,16,16,16,16,16,16,16,48,16,16,16,16,16,16,16,48,16,16,16,48,16,48,16,16,16,48,16,16,16,16,16,16,16,16,16,48,16,48,16,48,16,48,16,48,16,16,16,2842,128,64,16,16,16,16,16,48,16,16,16,48,16,16,16,48,16,16,16,16,16,48,16,16,16,16,16,48,16,48,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,48,16,16,16,48,16,16,16,16,16,16,16,48,16,16,16,16,16,16,16,48,16,16,16,48,16,48,16,16,16,48,16,16,16,16,16,16,16,16,16,48,16,48,16,48,16,48,16,48,16,16,16,3800\r", physicalgraph.device.Protocol.LAN, "${deviceNetworkId}"))
+    }
+def DenNex() {
+	log.debug "Denon Switched to Nexus"
+    def deviceNetworkId = "C0A8019B:1386"
+		sendHubCommand(new physicalgraph.device.HubAction("sendir,1:3,1,38109,1,1,128,64,16,16,16,16,16,48,16,16,16,48,16,16,16,48,16,16,16,16,16,48,16,16,16,16,16,48,16,48,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,48,16,16,16,48,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,48,16,16,16,48,16,48,16,16,16,48,16,16,16,16,16,16,16,16,16,48,16,48,16,16,16,48,16,48,16,16,16,2828,128,64,16,16,16,16,16,48,16,16,16,48,16,16,16,48,16,16,16,16,16,48,16,16,16,16,16,48,16,48,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,48,16,16,16,48,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,48,16,16,16,48,16,48,16,16,16,48,16,16,16,16,16,16,16,16,16,48,16,48,16,16,16,48,16,48,16,16,16,2828,128,64,16,16,16,16,16,48,16,16,16,48,16,16,16,48,16,16,16,16,16,48,16,16,16,16,16,48,16,48,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,48,16,16,16,48,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,48,16,16,16,48,16,48,16,16,16,48,16,16,16,16,16,16,16,16,16,48,16,48,16,16,16,48,16,48,16,16,16,3800\r", physicalgraph.device.Protocol.LAN, "${deviceNetworkId}"))
+    }
+def DenApp() {
+	log.debug "Denon Switched to AppleTV"
+    def deviceNetworkId = "C0A8019B:1386"
+		sendHubCommand(new physicalgraph.device.HubAction("sendir,1:3,1,38226,1,1,128,64,16,16,16,16,16,48,16,16,16,48,16,16,16,48,16,16,16,16,16,48,16,16,16,16,16,48,16,48,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,48,16,16,16,48,16,16,16,16,16,16,16,48,16,48,16,16,16,16,16,48,16,16,16,48,16,48,16,16,16,48,16,16,16,16,16,16,16,16,16,48,16,48,16,48,16,16,16,48,16,16,16,2850,128,64,16,16,16,16,16,48,16,16,16,48,16,16,16,48,16,16,16,16,16,48,16,16,16,16,16,48,16,48,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,48,16,16,16,48,16,16,16,16,16,16,16,48,16,48,16,16,16,16,16,48,16,16,16,48,16,48,16,16,16,48,16,16,16,16,16,16,16,16,16,48,16,48,16,48,16,16,16,48,16,16,16,2850,128,64,16,16,16,16,16,48,16,16,16,48,16,16,16,48,16,16,16,16,16,48,16,16,16,16,16,48,16,48,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,48,16,16,16,48,16,16,16,16,16,16,16,48,16,48,16,16,16,16,16,48,16,16,16,48,16,48,16,16,16,48,16,16,16,16,16,16,16,16,16,48,16,48,16,48,16,16,16,48,16,16,16,3800\r", physicalgraph.device.Protocol.LAN, "${deviceNetworkId}"))
+    }
+def DenDLNA() {
+	log.debug "Denon Switched to DLNA"
+    def deviceNetworkId = "C0A8019B:1386"
+		sendHubCommand(new physicalgraph.device.HubAction("sendir,1:3,1,38109,1,1,128,64,16,16,16,16,16,48,16,16,16,48,16,16,16,48,16,16,16,16,16,48,16,16,16,16,16,48,16,48,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,48,16,16,16,48,16,16,16,16,16,16,16,16,16,48,16,16,16,16,16,16,16,16,16,48,16,48,16,16,16,48,16,16,16,16,16,48,16,16,16,48,16,48,16,16,16,16,16,48,16,16,16,2828,128,64,16,16,16,16,16,48,16,16,16,48,16,16,16,48,16,16,16,16,16,48,16,16,16,16,16,48,16,48,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,48,16,16,16,48,16,16,16,16,16,16,16,16,16,48,16,16,16,16,16,16,16,16,16,48,16,48,16,16,16,48,16,16,16,16,16,48,16,16,16,48,16,48,16,16,16,16,16,48,16,16,16,2828,128,64,16,16,16,16,16,48,16,16,16,48,16,16,16,48,16,16,16,16,16,48,16,16,16,16,16,48,16,48,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,48,16,16,16,48,16,16,16,16,16,16,16,16,16,48,16,16,16,16,16,16,16,16,16,48,16,48,16,16,16,48,16,16,16,16,16,48,16,16,16,48,16,48,16,16,16,16,16,48,16,16,16,3800\r", physicalgraph.device.Protocol.LAN, "${deviceNetworkId}"))
+    }
+def DenDJ() {
+	log.debug "Denon Switched to DJ"
+    def deviceNetworkId = "C0A8019B:1386"
+		sendHubCommand(new physicalgraph.device.HubAction("sendir,1:3,1,38109,1,1,128,64,16,16,16,16,16,48,16,16,16,48,16,16,16,48,16,16,16,16,16,48,16,16,16,16,16,48,16,48,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,48,16,16,16,48,16,16,16,16,16,16,16,16,16,48,16,48,16,16,16,48,16,16,16,48,16,48,16,16,16,48,16,16,16,16,16,16,16,16,16,48,16,48,16,16,16,16,16,16,16,16,16,2828,128,64,16,16,16,16,16,48,16,16,16,48,16,16,16,48,16,16,16,16,16,48,16,16,16,16,16,48,16,48,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,48,16,16,16,48,16,16,16,16,16,16,16,16,16,48,16,48,16,16,16,48,16,16,16,48,16,48,16,16,16,48,16,16,16,16,16,16,16,16,16,48,16,48,16,16,16,16,16,16,16,16,16,2828,128,64,16,16,16,16,16,48,16,16,16,48,16,16,16,48,16,16,16,16,16,48,16,16,16,16,16,48,16,48,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,48,16,16,16,48,16,16,16,16,16,16,16,16,16,48,16,48,16,16,16,48,16,16,16,48,16,48,16,16,16,48,16,16,16,16,16,16,16,16,16,48,16,48,16,16,16,16,16,16,16,16,16,4878\r", physicalgraph.device.Protocol.LAN, "${deviceNetworkId}"))
+    }
+def BluOn() {
+	log.debug "BluRay Player Switched On/Off"
+    def deviceNetworkId = "C0A8019B:1386"
+		sendHubCommand(new physicalgraph.device.HubAction("sendir,1:3,1,37000,1,1,128,64,16,16,16,48,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,48,16,16,16,16,16,16,16,16,16,16,16,16,16,48,16,48,16,16,16,48,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,48,16,16,16,48,16,48,16,48,16,48,16,16,16,16,16,48,16,16,16,48,16,48,16,16,16,16,16,16,16,48,16,2734\r", physicalgraph.device.Protocol.LAN, "${deviceNetworkId}"))
+    }
+def BluTV() {
+	log.debug "BluRay Player TV Guide"
+    def deviceNetworkId = "C0A80F81:1386"
+		sendHubCommand(new physicalgraph.device.HubAction("sendir,1:3,1,36337,1,1,127,63,16,16,16,48,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,48,16,16,16,16,16,16,16,16,16,16,16,16,16,48,16,48,16,16,16,48,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,48,16,48,16,16,16,16,16,16,16,16,16,16,16,48,16,16,16,48,16,48,16,2726,127,63,16,16,16,48,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,48,16,16,16,16,16,16,16,16,16,16,16,16,16,48,16,48,16,16,16,48,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,48,16,48,16,16,16,16,16,16,16,16,16,16,16,48,16,16,16,48,16,48,16,3600\r", physicalgraph.device.Protocol.LAN, "${deviceNetworkId}"))
+    }
+                    
+         
+/*		def theCom
 			if (value == "pushed" && buttonNumber == 1) {
-			log.debug "Sending power on/off"
-			theCom = "sendir,1:3,1,38109,1,1,128,64,16,16,16,16,16,48,16,16,16,48,16,16,16,48,16,16,16,16,16,48,16,16,16,16,16,48,16,48,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,48,16,16,16,48,16,16,16,16,16,16,16,48,16,16,16,48,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,48,16,16,16,16,16,16,16,48,16,16,16,16,16,16,16,2840,128,64,16,16,16,16,16,48,16,16,16,48,16,16,16,48,16,16,16,16,16,48,16,16,16,16,16,48,16,48,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,48,16,16,16,48,16,16,16,16,16,16,16,48,16,16,16,48,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,48,16,16,16,16,16,16,16,48,16,16,16,16,16,16,16,2840,128,64,16,16,16,16,16,48,16,16,16,48,16,16,16,48,16,16,16,16,16,48,16,16,16,16,16,48,16,48,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,48,16,16,16,48,16,16,16,16,16,16,16,48,16,16,16,48,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,48,16,16,16,16,16,16,16,48,16,16,16,16,16,16,16,3800\r"
+			log.debug "Sending power on/off Denon"
+			theCom = "sendir,1:3,1,38000,1,1,11,29,10,70,10,30,10,30,10,30,10,70,10,30,10,30,10,30,10,30,10,30,10,70,10,70,10,30,10,30,10,1776,10,30,10,70,10,30,10,30,10,30,10,30,10,70,10,70,10,70,10,70,10,70,10,30,10,30,10,70,10,70,10,1776,10,30,10,70,10,30,10,30,10,30,10,30,10,70,10,70,10,70,10,70,10,70,10,30,10,30,10,70,10,70,10,1776,10,30,10,70,10,30,10,30,10,30,10,30,10,70,10,70,10,70,10,70,10,70,10,30,10,30,10,70,10,70,10,1776,10,70,10,30,10,30,10,30,10,70,10,30,10,30,10,30,10,30,10,30,10,70,10,70,10,30,10,30,10,1617\r"
             }
             else if (value == "pushed" && buttonNumber == 2) {
-			log.debug "Sending OK"
-			theCom = "sendir,1:3,1,38000,1,1,11,29,10,70,10,30,10,30,10,30,10,30,10,30,10,30,10,30,10,30,10,70,10,70,10,70,10,30,10,30,10,1776,10,30,10,70,10,30,10,30,10,30,10,70,10,70,10,70,10,70,10,70,10,30,10,30,10,30,10,70,10,70,10,1617\r"
-			}
+			log.debug "Sending power on/off panasonic"
+			theCom = "sendir,1:3,1,37000,1,1,128,64,16,16,16,48,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,48,16,16,16,16,16,16,16,16,16,16,16,16,16,48,16,48,16,16,16,48,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,48,16,16,16,48,16,48,16,48,16,48,16,16,16,16,16,48,16,16,16,48,16,48,16,16,16,16,16,16,16,48,16,2734\r"
+            }
             else if (value == "pushed" && buttonNumber == 3) {
-			log.debug "Sending Up"
-			theCom = "sendir,1:3,1,38109,1,1,128,64,16,16,16,16,16,48,16,16,16,48,16,16,16,48,16,16,16,16,16,48,16,16,16,16,16,48,16,48,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,48,16,16,16,48,16,16,16,16,16,16,16,48,16,48,16,16,16,48,16,48,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,48,16,48,16,48,16,48,16,2828\r"
-			}
-            else if (value == "pushed" && buttonNumber == 4) {
-			log.debug "Sending Down"
-			theCom = "sendir,1:3,1,38109,1,1,128,64,16,16,16,16,16,48,16,16,16,48,16,16,16,48,16,16,16,16,16,48,16,16,16,16,16,48,16,48,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,48,16,16,16,48,16,16,16,16,16,16,16,16,16,16,16,48,16,48,16,48,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,48,16,2839,128,64,16,16,16,16,16,48,16,16,16,48,16,16,16,48,16,16,16,16,16,48,16,16,16,16,16,48,16,48,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,48,16,16,16,48,16,16,16,16,16,16,16,16,16,16,16,48,16,48,16,48,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,48,16,3800\r"
-			}
-            else if (value == "pushed" && buttonNumber == 5) {
-			log.debug "Sending left"
-			theCom = "sendir,1:3,1,38109,1,1,128,64,16,16,16,16,16,48,16,16,16,48,16,16,16,48,16,16,16,16,16,48,16,16,16,16,16,48,16,48,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,48,16,16,16,48,16,16,16,16,16,16,16,48,16,16,16,48,16,48,16,48,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,48,16,16,16,16,16,48,16,2834,128,64,16,16,16,16,16,48,16,16,16,48,16,16,16,48,16,16,16,16,16,48,16,16,16,16,16,48,16,48,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,48,16,16,16,48,16,16,16,16,16,16,16,48,16,16,16,48,16,48,16,48,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,48,16,16,16,16,16,48,16,2833,128,64,16,16,16,16,16,48,16,16,16,48,16,16,16,48,16,16,16,16,16,48,16,16,16,16,16,48,16,48,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,48,16,16,16,48,16,16,16,16,16,16,16,48,16,16,16,48,16,48,16,48,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,48,16,16,16,16,16,48,16,3800\r"
-			}
-            else if (value == "pushed" && buttonNumber == 6) {
-			log.debug "Sending right"
-			theCom = "sendir,1:3,1,38109,1,1,128,64,16,16,16,16,16,48,16,16,16,48,16,16,16,48,16,16,16,16,16,48,16,16,16,16,16,48,16,48,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,48,16,16,16,48,16,16,16,16,16,16,16,16,16,48,16,48,16,48,16,48,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,48,16,16,16,48,16,2834,128,64,16,16,16,16,16,48,16,16,16,48,16,16,16,48,16,16,16,16,16,48,16,16,16,16,16,48,16,48,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,48,16,16,16,48,16,16,16,16,16,16,16,16,16,48,16,48,16,48,16,48,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,48,16,16,16,48,16,3800\r"
-			}
-            else if (value == "pushed" && buttonNumber == 7) {
-			log.debug "Sending mute"
-			theCom = "sendir,1:3,1,38000,1,1,11,29,10,70,10,30,10,30,10,30,10,30,10,30,10,30,10,30,10,70,10,70,10,70,10,70,10,30,10,30,10,1736,10,30,10,70,10,30,10,30,10,30,10,70,10,70,10,70,10,70,10,30,10,30,10,30,10,30,10,70,10,70,10,1657\r"
-			}
-            else if (value == "pushed" && buttonNumber == 8) {
-			log.debug "Sending option"
-			theCom = "sendir,1:3,1,38109,1,1,128,64,16,16,16,16,16,48,16,16,16,48,16,16,16,48,16,16,16,16,16,48,16,16,16,16,16,48,16,48,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,48,16,16,16,48,16,16,16,16,16,16,16,48,16,16,16,48,16,16,16,48,16,48,16,16,16,48,16,48,16,48,16,16,16,16,16,16,16,48,16,16,16,48,16,16,16,48,16,16,16,16,16,2842,128,64,16,16,16,16,16,48,16,16,16,48,16,16,16,48,16,16,16,16,16,48,16,16,16,16,16,48,16,48,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,48,16,16,16,48,16,16,16,16,16,16,16,48,16,16,16,48,16,16,16,48,16,48,16,16,16,48,16,48,16,48,16,16,16,16,16,16,16,48,16,16,16,48,16,16,16,48,16,16,16,16,16,3800\r"
-			}
-           	else if (value == "pushed" && buttonNumber == 9) {
-			log.debug "Sending back"
-			theCom = "sendir,1:3,2,37993,1,1,16,48,16,16,16,16,16,16,16,48,16,48,16,16,16,2825,128,64,16,16,16,16,16,48,16,16,16,48,16,16,16,48,16,16,16,16,16,48,16,16,16,16,16,48,16,48,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,48,16,16,16,48,16,16,16,16,16,16,16,16,16,48,16,16,16,16,16,16,16,48,16,16,16,16,16,16,16,16,16,16,16,16,16,48,16,48,16,16,16,16,16,16,16,48,16,48,16,16,16,3700\r"
-			}
-            else if (value == "pushed" && buttonNumber == 11) {
-			log.debug "Sending volDown"
-			theCom = "sendir,1:3,1,38109,1,1,128,64,16,16,16,16,16,48,16,16,16,48,16,16,16,48,16,16,16,16,16,48,16,16,16,16,16,48,16,48,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,48,16,16,16,48,16,16,16,16,16,16,16,48,16,16,16,16,16,16,16,48,16,48,16,48,16,16,16,48,16,16,16,16,16,16,16,16,16,48,16,48,16,16,16,16,16,16,16,48,16,16,16,2828,128,64,16,16,16,16,16,48,16,16,16,48,16,16,16,48,16,16,16,16,16,48,16,16,16,16,16,48,16,48,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,48,16,16,16,48,16,16,16,16,16,16,16,48,16,16,16,16,16,16,16,48,16,48,16,48,16,16,16,48,16,16,16,16,16,16,16,16,16,48,16,48,16,16,16,16,16,16,16,48,16,16,16,2828,128,64,16,16,16,16,16,48,16,16,16,48,16,16,16,48,16,16,16,16,16,48,16,16,16,16,16,48,16,48,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,48,16,16,16,48,16,16,16,16,16,16,16,48,16,16,16,16,16,16,16,48,16,48,16,48,16,16,16,48,16,16,16,16,16,16,16,16,16,48,16,48,16,16,16,16,16,16,16,48,16,16,16,3800\r"
-			}
-            else if (value == "pushed" && buttonNumber == 12) {
-			log.debug "Sending setup"
-			theCom = "sendir,1:3,1,38109,1,1,128,64,16,16,16,16,16,48,16,16,16,48,16,16,16,48,16,16,16,16,16,48,16,16,16,16,16,48,16,48,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,48,16,16,16,48,16,16,16,16,16,16,16,48,16,48,16,16,16,16,16,16,16,48,16,16,16,16,16,16,16,16,16,16,16,16,16,48,16,48,16,16,16,16,16,48,16,48,16,48,16,16,16,2828,128,64,16,16,16,16,16,48,16,16,16,48,16,16,16,48,16,16,16,16,16,48,16,16,16,16,16,48,16,48,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,48,16,16,16,48,16,16,16,16,16,16,16,48,16,48,16,16,16,16,16,16,16,48,16,16,16,16,16,16,16,16,16,16,16,16,16,48,16,48,16,16,16,16,16,48,16,48,16,48,16,16,16,2828,128,64,16,16,16,16,16,48,16,16,16,48,16,16,16,48,16,16,16,16,16,48,16,16,16,16,16,48,16,48,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,48,16,16,16,48,16,16,16,16,16,16,16,48,16,48,16,16,16,16,16,16,16,48,16,16,16,16,16,16,16,16,16,16,16,16,16,48,16,48,16,16,16,16,16,48,16,48,16,48,16,16,16,3800\r"
-			}
-            else if (value == "pushed" && buttonNumber == 13) {
-			log.debug "Sending volUp"
-			theCom = "sendir,1:3,1,38109,1,1,128,64,16,16,16,16,16,48,16,16,16,48,16,16,16,48,16,16,16,16,16,48,16,16,16,16,16,48,16,48,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,48,16,16,16,48,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,48,16,48,16,48,16,16,16,48,16,16,16,16,16,16,16,16,16,48,16,48,16,16,16,48,16,16,16,48,16,16,16,2828,128,64,16,16,16,16,16,48,16,16,16,48,16,16,16,48,16,16,16,16,16,48,16,16,16,16,16,48,16,48,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,48,16,16,16,48,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,48,16,48,16,48,16,16,16,48,16,16,16,16,16,16,16,16,16,48,16,48,16,16,16,48,16,16,16,48,16,16,16,2828,128,64,16,16,16,16,16,48,16,16,16,48,16,16,16,48,16,16,16,16,16,48,16,16,16,16,16,48,16,48,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,48,16,16,16,48,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,48,16,48,16,48,16,16,16,48,16,16,16,16,16,16,16,16,16,48,16,48,16,16,16,48,16,16,16,48,16,16,16,3800\r"
-			}
-            else if (value == "pushed" && buttonNumber == 14) {
-			log.debug "Sending appletv"
-			theCom = "sendir,1:3,1,38226,1,1,128,64,16,16,16,16,16,48,16,16,16,48,16,16,16,48,16,16,16,16,16,48,16,16,16,16,16,48,16,48,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,48,16,16,16,48,16,16,16,16,16,16,16,48,16,48,16,16,16,16,16,48,16,16,16,48,16,48,16,16,16,48,16,16,16,16,16,16,16,16,16,48,16,48,16,48,16,16,16,48,16,16,16,2850,128,64,16,16,16,16,16,48,16,16,16,48,16,16,16,48,16,16,16,16,16,48,16,16,16,16,16,48,16,48,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,48,16,16,16,48,16,16,16,16,16,16,16,48,16,48,16,16,16,16,16,48,16,16,16,48,16,48,16,16,16,48,16,16,16,16,16,16,16,16,16,48,16,48,16,48,16,16,16,48,16,16,16,2850,128,64,16,16,16,16,16,48,16,16,16,48,16,16,16,48,16,16,16,16,16,48,16,16,16,16,16,48,16,48,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,48,16,16,16,48,16,16,16,16,16,16,16,48,16,48,16,16,16,16,16,48,16,16,16,48,16,48,16,16,16,48,16,16,16,16,16,16,16,16,16,48,16,48,16,48,16,16,16,48,16,16,16,3800\r"
-			}
-            else if (value == "pushed" && buttonNumber == 15) {
-			log.debug "Sending nexusplayer"
-			theCom = "sendir,1:3,1,38109,1,1,128,64,16,16,16,16,16,48,16,16,16,48,16,16,16,48,16,16,16,16,16,48,16,16,16,16,16,48,16,48,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,48,16,16,16,48,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,48,16,16,16,48,16,48,16,16,16,48,16,16,16,16,16,16,16,16,16,48,16,48,16,16,16,48,16,48,16,16,16,2828,128,64,16,16,16,16,16,48,16,16,16,48,16,16,16,48,16,16,16,16,16,48,16,16,16,16,16,48,16,48,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,48,16,16,16,48,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,48,16,16,16,48,16,48,16,16,16,48,16,16,16,16,16,16,16,16,16,48,16,48,16,16,16,48,16,48,16,16,16,2828,128,64,16,16,16,16,16,48,16,16,16,48,16,16,16,48,16,16,16,16,16,48,16,16,16,16,16,48,16,48,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,48,16,16,16,48,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,48,16,16,16,48,16,48,16,16,16,48,16,16,16,16,16,16,16,16,16,48,16,48,16,16,16,48,16,48,16,16,16,3800\r"
-			}
-            else if (value == "pushed" && buttonNumber == 16) {
-			log.debug "Sending bluray"
+			log.debug "Sending bluray button denon"
 			theCom = "sendir,1:3,6,38109,1,1,128,64,16,16,16,16,16,48,16,16,16,48,16,16,16,48,16,16,16,16,16,48,16,16,16,16,16,48,16,48,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,48,16,16,16,48,16,16,16,16,16,16,16,48,16,16,16,16,16,16,16,48,16,16,16,48,16,48,16,16,16,48,16,16,16,16,16,16,16,16,16,48,16,48,16,48,16,48,16,48,16,16,16,2841,128,64,16,16,16,16,16,48,16,16,16,48,16,16,16,48,16,16,16,16,16,48,16,16,16,16,16,48,16,48,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,48,16,16,16,48,16,16,16,16,16,16,16,48,16,16,16,16,16,16,16,48,16,16,16,48,16,48,16,16,16,48,16,16,16,16,16,16,16,16,16,48,16,48,16,48,16,48,16,48,16,16,16,2842,128,64,16,16,16,16,16,48,16,16,16,48,16,16,16,48,16,16,16,16,16,48,16,16,16,16,16,48,16,48,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,48,16,16,16,48,16,16,16,16,16,16,16,48,16,16,16,16,16,16,16,48,16,16,16,48,16,48,16,16,16,48,16,16,16,16,16,16,16,16,16,48,16,48,16,48,16,48,16,48,16,16,16,3800\r"
 			}
-            else if (value == "pushed" && buttonNumber == 17) {
-			log.debug "Sending DLNA"
-			theCom = "sendir,1:3,1,38109,1,1,128,64,16,16,16,16,16,48,16,16,16,48,16,16,16,48,16,16,16,16,16,48,16,16,16,16,16,48,16,48,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,48,16,16,16,48,16,16,16,16,16,16,16,16,16,48,16,16,16,16,16,16,16,16,16,48,16,48,16,16,16,48,16,16,16,16,16,48,16,16,16,48,16,48,16,16,16,16,16,48,16,16,16,2828,128,64,16,16,16,16,16,48,16,16,16,48,16,16,16,48,16,16,16,16,16,48,16,16,16,16,16,48,16,48,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,48,16,16,16,48,16,16,16,16,16,16,16,16,16,48,16,16,16,16,16,16,16,16,16,48,16,48,16,16,16,48,16,16,16,16,16,48,16,16,16,48,16,48,16,16,16,16,16,48,16,16,16,2828,128,64,16,16,16,16,16,48,16,16,16,48,16,16,16,48,16,16,16,16,16,48,16,16,16,16,16,48,16,48,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,48,16,16,16,48,16,16,16,16,16,16,16,16,16,48,16,16,16,16,16,16,16,16,16,48,16,48,16,16,16,48,16,16,16,16,16,48,16,16,16,48,16,48,16,16,16,16,16,48,16,16,16,3800\r"
-			}
-            else if (value == "pushed" && buttonNumber == 18) {
-			log.debug "Sending DJ"
-			theCom = "sendir,1:3,1,38109,1,1,128,64,16,16,16,16,16,48,16,16,16,48,16,16,16,48,16,16,16,16,16,48,16,16,16,16,16,48,16,48,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,48,16,16,16,48,16,16,16,16,16,16,16,16,16,48,16,48,16,16,16,48,16,16,16,48,16,48,16,16,16,48,16,16,16,16,16,16,16,16,16,48,16,48,16,16,16,16,16,16,16,16,16,2828,128,64,16,16,16,16,16,48,16,16,16,48,16,16,16,48,16,16,16,16,16,48,16,16,16,16,16,48,16,48,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,48,16,16,16,48,16,16,16,16,16,16,16,16,16,48,16,48,16,16,16,48,16,16,16,48,16,48,16,16,16,48,16,16,16,16,16,16,16,16,16,48,16,48,16,16,16,16,16,16,16,16,16,2828,128,64,16,16,16,16,16,48,16,16,16,48,16,16,16,48,16,16,16,16,16,48,16,16,16,16,16,48,16,48,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,48,16,16,16,48,16,16,16,16,16,16,16,16,16,48,16,48,16,16,16,48,16,16,16,48,16,48,16,16,16,48,16,16,16,16,16,16,16,16,16,48,16,48,16,16,16,16,16,16,16,16,16,4878\r"
-			}
-    	
-        sendHubCommand(new physicalgraph.device.HubAction("""$theCom\r\n""", physicalgraph.device.Protocol.LAN, "${deviceNetworkId}")) 
-}
+*/              	
+        
+
+
+
 
 /*	def locks = find('locks', buttonNumber, value)
 	if (locks != null) toggle(locks)
